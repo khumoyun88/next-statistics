@@ -1,54 +1,63 @@
-"use client";
-import { useEffect, useState } from 'react';
+"use client"
+import React, { useState, useEffect, useRef } from "react";
 
-const CovidData = () => {
-    const [data, setData] = useState(null);
-    const [error, setError] = useState(null);
+function CovidData() {
+  const [countries, setCountries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const isFetched = useRef(false);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const url = 'https://covid-19-data.p.rapidapi.com/country/code?format=json&code=it';
-            const options = {
-                method: 'GET',
-                headers: {
-                    'x-rapidapi-key': 'a34168f7ecmsh9acf002d64cd67dp17e7a2jsn0c6877f3bc1c',
-                    'x-rapidapi-host': 'covid-19-data.p.rapidapi.com'
-                }
-            };
+  const url = "https://covid-19-data.p.rapidapi.com/help/countries?format=json";
+  const options = {
+    method: "GET",
+    headers: {
+      "x-rapidapi-key":'a34168f7ecmsh9acf002d64cd67dp17e7a2jsn0c6877f3bc1c',
+      "x-rapidapi-host": "covid-19-data.p.rapidapi.com",
+    },
+  };
 
-            try {
-                const response = await fetch(url, options);
-                const result = await response.json();
-                setData(result[0]); // Assuming result is an array with one object
-            } catch (error) {
-                setError(error.message);
-            }
-        };
-
-        fetchData();
-    }, []);
-
-    if (error) {
-        return <div>Error: {error}</div>;
+  useEffect(() => {
+    async function fetchData() {
+      if (isFetched.current) return;
+      isFetched.current = true; 
+      try {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+          throw new Error("Network error");
+        }
+        const result = await response.json();
+        setCountries(result);
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
     }
 
-    if (!data) {
-        return <div>Loading...</div>;
-    }
+    fetchData();
+  }, []); 
 
-    return (
-        <div>
-            <h1>COVID-19 Data for Italy</h1>
-            <div className="p-4 bg-white shadow-lg rounded-lg border border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-800">{data.country}</h2>
-                <p>Confirmed Cases: {data.confirmed}</p>
-                <p>Recovered Cases: {data.recovered}</p>
-                <p>Critical Cases: {data.critical}</p>
-                <p>Deaths: {data.deaths}</p>
-                <p>Last Update: {data.lastUpdate}</p>
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error}</p>;
+
+  return (
+    <div >
+      <h1 className="text-lg font-semibold text-r" >
+        Total Deaths: 99.999.999
+      </h1>
+      <ul >
+        {countries.map((country) => (
+          <li>
+            <div >
+              <h2 className="text-lg font-semibold text-gray-600 cursor-pointer hover:text-gray-800">
+                {country.name}
+              </h2>
             </div>
-        </div>
-    );
-};
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export default CovidData;
